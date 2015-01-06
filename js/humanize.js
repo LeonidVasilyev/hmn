@@ -1,10 +1,11 @@
+var originalEditorSelector = '#postingHtmlBox';
 // TODO: Disable Compose, Bold etc. buttons
 // TODO: Intercept image add
 function injectHumanEditor() {
     // Copy original post wrapper and put new editor there.
-    $('.boxes').append('<div id="htmlBoxWrapper" class="htmlBoxWrapper"></div>');
+    $('.boxes').append('<div id="humanEditorWrapper" class="htmlBoxWrapper"></div>');
 
-    var humanEditor = ace.edit('htmlBoxWrapper');
+    var humanEditor = ace.edit('humanEditorWrapper');
     // TODO: Check and fix html-worker loading issue.
     humanEditor.getSession().setUseWorker(false);
     humanEditor.getSession().setMode('ace/mode/html');
@@ -12,19 +13,27 @@ function injectHumanEditor() {
     humanEditor.getSession().setUseWrapMode(true);
     humanEditor.setShowPrintMargin(false);
 
-    var originalEditorValue = $("#postingHtmlBox:first-child()").val();
-    if (originalEditorValue.length > 0) {
-        originalEditorValue = vkbeautify.xml(originalEditorValue);
-        humanEditor.setValue(originalEditorValue);
+    function updateHumanEditor() {
+        var originalEditorValue = $(originalEditorSelector).val();
+        var humanEditorValue = humanEditor.getValue();
+        if (originalEditorValue.length > 0 && originalEditorValue !== humanEditorValue) {
+            originalEditorValue = vkbeautify.xml(originalEditorValue);
+            humanEditor.setValue(originalEditorValue);
+        }
     }
+    updateHumanEditor();
 
     humanEditor.on('change', function () {
         // Update original textarea value, which will be posted on post Update.
         var humanhumanEditorValue = humanEditor.getValue();
-        $('#postingHtmlBox:first-child()').val(humanhumanEditorValue);
+        $(originalEditorSelector).val(humanhumanEditorValue);
     });
 
-    $('body').off('focus', '#postingHtmlBox:first-child()', injectHumanEditor);
+    // Human editor preserved after post switch.
+    $(document).off('focus', originalEditorSelector, injectHumanEditor);
+
+    var originalEditorContainerSelector = 'div.GCUXF0KCL5'; 
+    $(document).on('DOMSubtreeModified', originalEditorContainerSelector, updateHumanEditor);
 
     // Turn off unneeded stuff.
     $('button:contains("Compose")').hide();
@@ -36,5 +45,4 @@ function injectHumanEditor() {
 // TODO: Instead of turn on editor on focus, turn it on as soon as possible. Maybe inject script at the beggining of the document
 // which will set autofocus of original editors textarea.
 // Two selector to 'on' work for textarea, which will be created in the future. 
-// Almost everything on blogger editor page is created using JavaScript and XmlHttpRequests.
-$('body').on('focus', '#postingHtmlBox:first-child()', injectHumanEditor);
+$(document).on('focus', originalEditorSelector, injectHumanEditor);
