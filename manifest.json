@@ -1,12 +1,13 @@
 {
 
-    "name": "blogger-human-editor",
+    "name": "humanize-blogger-editor",
     "version": "0.0.1",
     "manifest_version": 2,
     "content_scripts": [
         {
             "run_at": "document_end",
             "matches": [ "http://www.blogger.com/*", "https://www.blogger.com/*" ],
+            "css": [ "css/humanize.css" ],
             "js": [ "js/libs/jquery-1.11.2.min.js", "js/libs/vkbeautify.js", "js/libs/ace/ace.js", "js/libs/ace/mode-html.js", "js/libs/ace/theme-monokai.js", "js/humanize.js" ]
         }
     ]
