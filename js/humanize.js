@@ -1,20 +1,41 @@
-var originalEditorSelector = '#postingHtmlBox';
-// TODO: Disable Compose, Bold etc. buttons
-// TODO: Intercept image add
-function humanizeHtmlEditor() {
-    // Copy original post wrapper and put new editor there.
-    $('.boxes').append('<div id="humanizedEditorWrapper" class="editor htmlBoxWrapper"></div>');
+(function () {
+    var originalEditorSelector = '#postingHtmlBox';
 
-    var humanizedEditor = ace.edit('humanizedEditorWrapper');
-    // TODO: Check and fix html-worker loading issue.
-    humanizedEditor.getSession().setUseWorker(false);
-    humanizedEditor.getSession().setMode('ace/mode/html');
-    humanizedEditor.setTheme('ace/theme/monokai');
-    humanizedEditor.getSession().setUseWrapMode(true);
-    humanizedEditor.setFontSize(13);
-    humanizedEditor.setShowPrintMargin(false);
+    function switchToHtmlMode() {
+        var composeModeButtonSelector = 'span.tabs button:first-of-type()';
+        var composeModeIsOn = $(composeModeButtonSelector).attr('aria-selected') === 'true';
+        if (composeModeIsOn) {
+            var htmlModeButtonSelector = 'span.tabs button:last-of-type()';
+            $(htmlModeButtonSelector).trigger('click');
+        }
+        // Turn off original editor mode switching.
+        $('span.tabs').hide();
+    }
 
-    function updateHumanizedEditor() {
+    function createHumanizedEditor() {
+        // Copy original post wrapper and put new editor there.
+        // TODO: replace with .after().
+        $('.boxes').append('<div id="humanizedEditorWrapper" class="editor htmlBoxWrapper"></div>');
+        var humanizedEditor = ace.edit('humanizedEditorWrapper');
+        return humanizedEditor;
+    }
+
+    function configureHumanizedEditor(humanizedEditor) {
+        // TODO: Check and fix html-worker loading issue.
+        humanizedEditor.getSession().setUseWorker(false);
+        humanizedEditor.getSession().setMode('ace/mode/html');
+        humanizedEditor.setTheme('ace/theme/monokai');
+        humanizedEditor.getSession().setUseWrapMode(true);
+        humanizedEditor.setFontSize(13);
+        humanizedEditor.setShowPrintMargin(false);
+        humanizedEditor.on('change', function () {
+            // Update original textarea value, which will be posted on post Update.
+            var humanhumanizedEditorValue = humanizedEditor.getValue();
+            $(originalEditorSelector).val(humanhumanizedEditorValue);
+        });
+    }
+
+    function updateHumanizedEditorValue(humanizedEditor) {
         var originalEditorValue = $(originalEditorSelector).val();
         var humanizedEditorValue = humanizedEditor.getValue();
         if (originalEditorValue.length > 0 && originalEditorValue !== humanizedEditorValue) {
@@ -22,32 +43,34 @@ function humanizeHtmlEditor() {
             humanizedEditor.setValue(originalEditorValue, 1);
         }
     }
-    updateHumanizedEditor();
 
-    humanizedEditor.on('change', function () {
-        // Update original textarea value, which will be posted on post Update.
-        var humanhumanizedEditorValue = humanizedEditor.getValue();
-        $(originalEditorSelector).val(humanhumanizedEditorValue);
+    // TODO: Intercept image add
+    function humanizeHtmlEditor() {
+        // TODO: Fix. Button attributes do not exist at this moment.
+        // switchToHtmlMode();
+        var humanizedEditor = createHumanizedEditor();
+        configureHumanizedEditor(humanizedEditor);
+        updateHumanizedEditorValue(humanizedEditor);
+
+        var originalEditorContainerSelector = 'div.GCUXF0KCL5';
+        // TODO: Replace with observer.
+        $(document).on('DOMSubtreeModified', originalEditorContainerSelector, function () { updateHumanizedEditorValue(humanizedEditor) });
+    }
+
+    function isMutatedNodeContainsOriginalEditor(node) {
+        return node.className === 'postsNew';
+    }
+
+    var bloggerObserver = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            if (mutation.addedNodes.length > 0 && isMutatedNodeContainsOriginalEditor(mutation.addedNodes[0])) {
+                // At this moment all data needed for humanized editor creation presented on the page.
+                humanizeHtmlEditor();
+                bloggerObserver.disconnect();
+            }
+        });
     });
 
-    // Human editor preserved after post switch, so inject must be done only once.
-    $(document).off('focus', originalEditorSelector, humanizeHtmlEditor);
-
-    var originalEditorContainerSelector = 'div.GCUXF0KCL5'; 
-    $(document).on('DOMSubtreeModified', originalEditorContainerSelector, updateHumanizedEditor);
-
-    // Turn off unneeded stuff.
-    $('button:contains("Compose")').hide();
-    $('button:contains("HTML")').hide();
-    $('#postingHtmlToolbar #bold').hide();
-    $('#postingHtmlToolbar #italic').hide();
-    $('#postingHtmlToolbar #strikeThrough').hide();
-    $('#postingHtmlToolbar #link').hide();
-    $('#postingHtmlToolbar #BLOCKQUOTE').hide();
-    $('#postingHtmlToolbar .goog-toolbar-separator').hide();
-}
-
-// TODO: Instead of turn on editor on focus, turn it on as soon as possible. Maybe inject script at the beggining of the document
-// which will set autofocus of original editors textarea.
-// Two selector to 'on' work for textarea, which will be created in the future. 
-$(document).on('focus', originalEditorSelector, humanizeHtmlEditor);
+    var configuration = { childList: true, subtree: true };
+    bloggerObserver.observe(document.body, configuration);
+})();

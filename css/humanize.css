@@ -1,3 +1,9 @@
 ﻿#humanizedEditorWrapper {
     z-index: 0;
 }
+
+#postingHtmlToolbar>div>div:not(#imageUpload),
+span.tabs {
+    display: none;
+}
+
