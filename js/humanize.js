@@ -44,7 +44,6 @@
         }
     }
 
-    // TODO: Intercept image add
     function humanizeHtmlEditor() {
         // TODO: Fix. Button attributes do not exist at this moment.
         // switchToHtmlMode();
@@ -52,18 +51,36 @@
         configureHumanizedEditor(humanizedEditor);
         updateHumanizedEditorValue(humanizedEditor);
 
-        var originalEditorContainerSelector = 'div.GCUXF0KCL5';
-        // TODO: Replace with observer.
-        $(document).on('DOMSubtreeModified', originalEditorContainerSelector, function () { updateHumanizedEditorValue(humanizedEditor) });
-    }
+        var originalEditorObserver = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                // Posts switch.
+                var originalEditorID = 'postingHtmlBox';
+                if (mutation.target.id === originalEditorID &&
+                        mutation.attributeName === 'disabled' &&
+                        mutation.target.disabled === false) {
+                    updateHumanizedEditorValue(humanizedEditor);
+                }
 
-    function isMutatedNodeContainsOriginalEditor(node) {
-        return node.className === 'postsNew';
+                // Image insert.
+                var imageUploadDialogBackgroundClass = 'modal-dialog-bg';
+                if (mutation.target.className === imageUploadDialogBackgroundClass &&
+                        mutation.target.nodeName === 'DIV' &&
+                        mutation.attributeName === 'style' &&
+                        mutation.target.style.display === 'none') {
+                    console.log(mutation);
+                    updateHumanizedEditorValue(humanizedEditor);
+                }
+            });
+
+        });
+        var configuration = { attributes: true, subtree: true };
+        originalEditorObserver.observe(document.body, configuration);
     }
 
     var bloggerObserver = new MutationObserver(function (mutations) {
         mutations.forEach(function (mutation) {
-            if (mutation.addedNodes.length > 0 && isMutatedNodeContainsOriginalEditor(mutation.addedNodes[0])) {
+            var originalEditorID = "postingHtmlBox";
+            if (mutation.target.id === originalEditorID && mutation.attributeName === "disabled" && mutation.target.disabled === false) {
                 // At this moment all data needed for humanized editor creation presented on the page.
                 humanizeHtmlEditor();
                 bloggerObserver.disconnect();
@@ -71,6 +88,7 @@
         });
     });
 
-    var configuration = { childList: true, subtree: true };
+    // TODO: Add attribute filter.
+    var configuration = { attributes: true, subtree: true };
     bloggerObserver.observe(document.body, configuration);
 })();
