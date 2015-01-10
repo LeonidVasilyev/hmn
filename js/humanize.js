@@ -1,7 +1,19 @@
-(function () {
+var HumanizedEditor = (function () {
+
+    var humanizedEditor = {
+        init: function () {
+            // TODO: Fix. Button attributes do not exist at this moment.
+            // setHtmlMode();
+            var editor = create();
+            configure(editor);
+            update(editor);
+            onOriginalEditorValueChange(function () { update(editor); });
+        }
+    };
+
     var originalEditorSelector = '#postingHtmlBox';
 
-    function switchToHtmlMode() {
+    function setHtmlMode() {
         var composeModeButtonSelector = 'span.tabs button:first-of-type()';
         var composeModeIsOn = $(composeModeButtonSelector).attr('aria-selected') === 'true';
         if (composeModeIsOn) {
@@ -12,7 +24,7 @@
         $('span.tabs').hide();
     }
 
-    function createHumanizedEditor() {
+    function create() {
         // Copy original post wrapper and put new editor there.
         // TODO: replace with .after().
         $('.boxes').append('<div id="humanizedEditorWrapper" class="editor htmlBoxWrapper"></div>');
@@ -20,7 +32,7 @@
         return humanizedEditor;
     }
 
-    function configureHumanizedEditor(humanizedEditor) {
+    function configure(humanizedEditor) {
         // TODO: Check and fix html-worker loading issue.
         humanizedEditor.getSession().setUseWorker(false);
         humanizedEditor.getSession().setMode('ace/mode/html');
@@ -30,12 +42,17 @@
         humanizedEditor.setShowPrintMargin(false);
         humanizedEditor.on('change', function () {
             // Update original textarea value, which will be posted on post Update.
-            var humanhumanizedEditorValue = humanizedEditor.getValue();
-            $(originalEditorSelector).val(humanhumanizedEditorValue);
+
+            // TODO: Get cursor, calculate number of characters before cursor, and cal setSelectionRange on original editor textbox.
+            //var cursor = humanizedEditor.selection.getCursor();
+            //var Range = require("ace/range").Range;
+            //humanizedEditor.selection.setSelectionRange()
+            var humanizedEditorValue = humanizedEditor.getValue();
+            $(originalEditorSelector).val(humanizedEditorValue);
         });
     }
 
-    function updateHumanizedEditorValue(humanizedEditor) {
+    function update(humanizedEditor) {
         var originalEditorValue = $(originalEditorSelector).val();
         var humanizedEditorValue = humanizedEditor.getValue();
         if (originalEditorValue.length > 0 && originalEditorValue !== humanizedEditorValue) {
@@ -44,13 +61,7 @@
         }
     }
 
-    function humanizeHtmlEditor() {
-        // TODO: Fix. Button attributes do not exist at this moment.
-        // switchToHtmlMode();
-        var humanizedEditor = createHumanizedEditor();
-        configureHumanizedEditor(humanizedEditor);
-        updateHumanizedEditorValue(humanizedEditor);
-
+    function onOriginalEditorValueChange(callback) {
         var originalEditorObserver = new MutationObserver(function (mutations) {
             mutations.forEach(function (mutation) {
                 // Posts switch.
@@ -58,7 +69,7 @@
                 if (mutation.target.id === originalEditorID &&
                         mutation.attributeName === 'disabled' &&
                         mutation.target.disabled === false) {
-                    updateHumanizedEditorValue(humanizedEditor);
+                    callback();
                 }
 
                 // Image insert.
@@ -67,8 +78,7 @@
                         mutation.target.nodeName === 'DIV' &&
                         mutation.attributeName === 'style' &&
                         mutation.target.style.display === 'none') {
-                    console.log(mutation);
-                    updateHumanizedEditorValue(humanizedEditor);
+                    callback();
                 }
             });
 
@@ -77,18 +87,23 @@
         originalEditorObserver.observe(document.body, configuration);
     }
 
-    var bloggerObserver = new MutationObserver(function (mutations) {
-        mutations.forEach(function (mutation) {
-            var originalEditorID = "postingHtmlBox";
-            if (mutation.target.id === originalEditorID && mutation.attributeName === "disabled" && mutation.target.disabled === false) {
-                // At this moment all data needed for humanized editor creation presented on the page.
-                humanizeHtmlEditor();
-                bloggerObserver.disconnect();
-            }
-        });
-    });
+    return humanizedEditor;
+}());
 
-    // TODO: Add attribute filter.
-    var configuration = { attributes: true, subtree: true };
-    bloggerObserver.observe(document.body, configuration);
-})();
+
+var bloggerObserver = new MutationObserver(function (mutations) {
+    var originalEditorID = "postingHtmlBox";
+
+    mutations.forEach(function (mutation) {
+        if (mutation.target.id === originalEditorID && mutation.attributeName === "disabled" && mutation.target.disabled === false) {
+            // At this moment all data needed for humanized editor creation presented on the page.
+            var humanizedEditor = Object.create(HumanizedEditor);
+            humanizedEditor.init();
+            bloggerObserver.disconnect();
+        }
+    });
+});
+
+// TODO: Add attribute filter.
+var configuration = { attributes: true, subtree: true };
+bloggerObserver.observe(document.body, configuration);
