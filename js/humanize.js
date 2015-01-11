@@ -42,13 +42,11 @@ var HumanizedEditor = (function () {
         humanizedEditor.setShowPrintMargin(false);
         humanizedEditor.on('change', function () {
             // Update original textarea value, which will be posted on post Update.
-
-            // TODO: Get cursor, calculate number of characters before cursor, and cal setSelectionRange on original editor textbox.
-            //var cursor = humanizedEditor.selection.getCursor();
-            //var Range = require("ace/range").Range;
-            //humanizedEditor.selection.setSelectionRange()
             var humanizedEditorValue = humanizedEditor.getValue();
             $(originalEditorSelector).val(humanizedEditorValue);
+        });
+        humanizedEditor.on('blur', function () {
+            updateOriginalEditorSelection(humanizedEditor);
         });
     }
 
@@ -85,6 +83,13 @@ var HumanizedEditor = (function () {
         });
         var configuration = { attributes: true, subtree: true };
         originalEditorObserver.observe(document.body, configuration);
+    }
+
+    function updateOriginalEditorSelection(humanizedEditor) {
+        // Convert selection positions to start and end character indexes.
+        var start = humanizedEditor.session.doc.positionToIndex(humanizedEditor.selection.getRange().start)
+        var end = humanizedEditor.session.doc.positionToIndex(humanizedEditor.selection.getRange().end)
+        $(originalEditorSelector).get(0).setSelectionRange(start, end);
     }
 
     return humanizedEditor;
