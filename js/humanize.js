@@ -28,6 +28,11 @@ var HumanizedEditor = (function () {
         // Copy original post wrapper and put new editor there.
         // TODO: replace with .after().
         $('.boxes').append('<div id="humanizedEditorWrapper" class="editor htmlBoxWrapper"></div>');
+        // Option holder style change a bit later than window resize or media queries applied.
+        // It shrinks editor, which is not rerender text wrap after container div is resized.
+        // So I add stretched to whole editors wrapper iframe and observe it's windows resize event to rerender editors text wrap. 
+        $('.editorHolder').append('<iframe id="holderResizeSignalFrame" width=100% height=100% style="position:absolute;z-index:-1"></iframe>');
+
         var humanizedEditor = ace.edit('humanizedEditorWrapper');
         return humanizedEditor;
     }
@@ -48,6 +53,9 @@ var HumanizedEditor = (function () {
         humanizedEditor.on('blur', function () {
             updateOriginalEditorSelection(humanizedEditor);
         });
+        $('#holderResizeSignalFrame')[0].contentWindow.window.onresize = function () {
+            humanizedEditor.resize(true);
+        };
     }
 
     function update(humanizedEditor) {
