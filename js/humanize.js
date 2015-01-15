@@ -2,8 +2,6 @@ var HumanizedEditor = (function () {
 
     var humanizedEditor = {
         init: function () {
-            // TODO: Fix. Button attributes do not exist at this moment.
-            // setHtmlMode();
             var editor = create();
             configure(editor);
             update(editor);
@@ -13,17 +11,6 @@ var HumanizedEditor = (function () {
 
     var originalEditorSelector = '#postingHtmlBox';
 
-    function setHtmlMode() {
-        var composeModeButtonSelector = 'span.tabs button:first-of-type()';
-        var composeModeIsOn = $(composeModeButtonSelector).attr('aria-selected') === 'true';
-        if (composeModeIsOn) {
-            var htmlModeButtonSelector = 'span.tabs button:last-of-type()';
-            $(htmlModeButtonSelector).trigger('click');
-        }
-        // Turn off original editor mode switching.
-        $('span.tabs').hide();
-    }
-
     function create() {
         // Copy original post wrapper and put new editor there.
         // TODO: replace with .after().
@@ -32,8 +19,12 @@ var HumanizedEditor = (function () {
         // It shrinks editor, which is not rerender text wrap after container div is resized.
         // So I add stretched to whole editors wrapper iframe and observe it's windows resize event to rerender editors text wrap. 
         $('.editorHolder').append('<iframe id="holderResizeSignalFrame" width=100% height=100% style="position:absolute;z-index:-1"></iframe>');
+        // Turn off mode switching.
+        var modeToggle = $('span.tabs');
+        modeToggle.hide();
 
         var humanizedEditor = ace.edit('humanizedEditorWrapper');
+
         return humanizedEditor;
     }
 
@@ -105,18 +96,34 @@ var HumanizedEditor = (function () {
 
 
 var bloggerObserver = new MutationObserver(function (mutations) {
-    var originalEditorID = "postingHtmlBox";
-
     mutations.forEach(function (mutation) {
-        if (mutation.target.id === originalEditorID && mutation.attributeName === "disabled" && mutation.target.disabled === false) {
-            // At this moment all data needed for humanized editor creation presented on the page.
+        if ((mutation.target.id === 'postingHtmlBox' && mutation.attributeName === "disabled" && mutation.target.disabled === false)) {
+            // At this moment all data needed for humanized editor creation presented on the page if html mode is on by default.
             var humanizedEditor = Object.create(HumanizedEditor);
             humanizedEditor.init();
             bloggerObserver.disconnect();
+        } else if (mutation.target.className === 'state composeMode') {
+            // Switch to html mode if compose mode is turned on by default.
+            var htmlModeToggle = $('span.tabs button:last-of-type()');
+            htmlModeToggle.trigger('click');
+            // Now I need to wait until blogger loads html version of a post.
+            bloggerObserver.disconnect();
+            bloggerObserver = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    if (mutation.target.id === 'blogger-app' && mutation.target.nodeName === 'BODY' && mutation.type === 'childList' && mutation.removedNodes.length === 1 && mutation.removedNodes[0].className === 'gwt-PopupPanel') {
+                        // At this moment all data needed for humanized editor creation presented on the page if compose mode is on by default.
+                        var humanizedEditor = Object.create(HumanizedEditor);
+                        humanizedEditor.init();
+                        bloggerObserver.disconnect();
+                    }
+                });
+            });
+            var configuration = { subtree: true, childList: true};
+            bloggerObserver.observe(document.body, configuration);
         }
     });
 });
 
 // TODO: Add attribute filter.
-var configuration = { attributes: true, subtree: true };
+var configuration = { attributes: true, subtree: true};
 bloggerObserver.observe(document.body, configuration);
