@@ -2,8 +2,7 @@
     z-index: 0;
 }
 
-#postingHtmlToolbar>div>div:not(#imageUpload),
-span.tabs {
+#postingHtmlToolbar>div>div:not(#imageUpload){
     display: none;
 }
 

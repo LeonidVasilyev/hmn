@@ -36,6 +36,12 @@ var HumanizedEditor = (function () {
         humanizedEditor.getSession().setUseWrapMode(true);
         humanizedEditor.setFontSize(13);
         humanizedEditor.setShowPrintMargin(false);
+        humanizedEditor.commands.addCommand({
+            name: 'insertImage',
+            bindKey: { win: 'Ctrl-I' },
+            exec: insertImage,
+            readonly: false
+        });
         humanizedEditor.on('change', function () {
             // Update original textarea value, which will be posted on post Update.
             var humanizedEditorValue = humanizedEditor.getValue();
@@ -61,6 +67,7 @@ var HumanizedEditor = (function () {
     function onOriginalEditorValueChange(callback) {
         var originalEditorObserver = new MutationObserver(function (mutations) {
             mutations.forEach(function (mutation) {
+                // TODO: Fix. This won't work in case post body is empty and in case of new post in html mode.
                 // Posts switch.
                 var originalEditorID = 'postingHtmlBox';
                 if (mutation.target.id === originalEditorID &&
@@ -70,8 +77,8 @@ var HumanizedEditor = (function () {
                 }
 
                 // Image insert.
-                var imageUploadDialogBackgroundClass = 'modal-dialog-bg';
-                if (mutation.target.className === imageUploadDialogBackgroundClass &&
+                var insertImageDialogBackgroundClass = 'modal-dialog-bg';
+                if (mutation.target.className === insertImageDialogBackgroundClass &&
                         mutation.target.nodeName === 'DIV' &&
                         mutation.attributeName === 'style' &&
                         mutation.target.style.display === 'none') {
@@ -89,6 +96,16 @@ var HumanizedEditor = (function () {
         var start = humanizedEditor.session.doc.positionToIndex(humanizedEditor.selection.getRange().start)
         var end = humanizedEditor.session.doc.positionToIndex(humanizedEditor.selection.getRange().end)
         $(originalEditorSelector).get(0).setSelectionRange(start, end);
+    }
+
+    function insertImage() {
+        var insertImageTrigger = document.getElementById('imageUpload');
+
+        var mouseDown = new Event('mousedown', { "bubbles": true });
+        var mouseUp = new Event('mouseup', { "bubbles": true });
+
+        insertImageTrigger.dispatchEvent(mouseDown);
+        insertImageTrigger.dispatchEvent(mouseUp);
     }
 
     return humanizedEditor;
