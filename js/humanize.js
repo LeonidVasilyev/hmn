@@ -5,7 +5,9 @@ var HumanizedEditor = (function () {
             var editor = create();
             configure(editor);
             update(editor);
-            onOriginalEditorValueChange(function () { update(editor); });
+            // Clear first undo stack element to prevent ctrl-z from return editor to it's default value and not initial post body value.
+            clearUndoStack(editor);
+            onOriginalEditorValueChange(editor);
         }
     };
 
@@ -64,7 +66,7 @@ var HumanizedEditor = (function () {
         }
     }
 
-    function onOriginalEditorValueChange(callback) {
+    function onOriginalEditorValueChange(humanizedEditor) {
         var originalEditorObserver = new MutationObserver(function (mutations) {
             mutations.forEach(function (mutation) {
                 // TODO: Fix. This won't work in case post body is empty and in case of new post in html mode.
@@ -73,7 +75,9 @@ var HumanizedEditor = (function () {
                 if (mutation.target.id === originalEditorID &&
                         mutation.attributeName === 'disabled' &&
                         mutation.target.disabled === false) {
-                    callback();
+                    update(humanizedEditor);
+                    // New post - new undo stack.
+                    clearUndoStack(humanizedEditor);
                 }
 
                 // Image insert.
@@ -82,7 +86,7 @@ var HumanizedEditor = (function () {
                         mutation.target.nodeName === 'DIV' &&
                         mutation.attributeName === 'style' &&
                         mutation.target.style.display === 'none') {
-                    callback();
+                    update(humanizedEditor);
                 }
             });
 
@@ -96,6 +100,11 @@ var HumanizedEditor = (function () {
         var start = humanizedEditor.session.doc.positionToIndex(humanizedEditor.selection.getRange().start)
         var end = humanizedEditor.session.doc.positionToIndex(humanizedEditor.selection.getRange().end)
         $(originalEditorSelector).get(0).setSelectionRange(start, end);
+    }
+
+    function clearUndoStack(humanizedEditor) {
+        var UndoManager = require('ace/undomanager').UndoManager;
+        humanizedEditor.getSession().setUndoManager(new UndoManager());
     }
 
     function insertImage() {
@@ -112,7 +121,6 @@ var HumanizedEditor = (function () {
 
     return humanizedEditor;
 }());
-
 
 var bloggerObserver = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
