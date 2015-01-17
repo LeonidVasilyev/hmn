@@ -103,9 +103,11 @@ var HumanizedEditor = (function () {
 
         var mouseDown = new Event('mousedown', { "bubbles": true });
         var mouseUp = new Event('mouseup', { "bubbles": true });
+        var mouseOut = new Event('mouseout', { "bubbles": true });
 
         insertImageTrigger.dispatchEvent(mouseDown);
         insertImageTrigger.dispatchEvent(mouseUp);
+        insertImageTrigger.dispatchEvent(mouseOut);
     }
 
     return humanizedEditor;
