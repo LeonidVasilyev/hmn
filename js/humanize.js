@@ -44,6 +44,15 @@ var HumanizedEditor = (function () {
             exec: insertImage,
             readonly: false
         });
+        humanizedEditor.commands.addCommand({
+            name: 'beautifyPost',
+            bindKey: { win: 'Ctrl-B' },
+            exec: function () {
+                var beautifiedValue = html_beautify(humanizedEditor.getValue());
+                humanizedEditor.setValue(beautifiedValue, 1);
+            },
+            readonly: false
+        });
         humanizedEditor.on('change', function () {
             // Update original textarea value, which will be posted on post Update.
             var humanizedEditorValue = humanizedEditor.getValue();
@@ -102,8 +111,8 @@ var HumanizedEditor = (function () {
         $(originalEditorSelector).get(0).setSelectionRange(start, end);
     }
 
+    var UndoManager = require('ace/undomanager').UndoManager;
     function clearUndoStack(humanizedEditor) {
-        var UndoManager = require('ace/undomanager').UndoManager;
         humanizedEditor.getSession().setUndoManager(new UndoManager());
     }
 
@@ -119,6 +128,10 @@ var HumanizedEditor = (function () {
         insertImageTrigger.dispatchEvent(mouseOut);
     }
 
+    function switchToLabels() {
+        var labelsTrigger = $('.optionHolder a').get(1);
+        labelsTrigger.click();
+    }
     return humanizedEditor;
 }());
 
