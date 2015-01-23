@@ -23,6 +23,14 @@ var HumanizedEditor = (function () {
         // Turn off mode switching.
         var modeToggle = $('span.tabs');
         modeToggle.hide();
+
+        // Add identifiers to important interface elements using jQuery :contains() selector, so I can easily identify and call native events
+        // on this elements later.
+        var closeButton = $('button.blogg-button:contains(Close)');
+        closeButton.attr('id', 'closeButton');
+        var previewButton = $('button.blogg-button:contains(Preview)');
+        previewButton.attr('id', 'previewButton');
+
         // Inject humanized editor.
         var humanizedEditor = ace.edit('humanizedEditorWrapper');
         return humanizedEditor;
@@ -40,7 +48,6 @@ var HumanizedEditor = (function () {
             name: 'insertImage',
             bindKey: { win: 'Ctrl-I' },
             exec: insertImage,
-            readonly: false
         });
         humanizedEditor.commands.addCommand({
             name: 'beautifyPost',
@@ -49,7 +56,16 @@ var HumanizedEditor = (function () {
                 var beautifiedValue = html_beautify(humanizedEditor.getValue());
                 humanizedEditor.setValue(beautifiedValue, 1);
             },
-            readonly: false
+        });
+        humanizedEditor.commands.addCommand({
+            name: 'closePost',
+            bindKey: { win: 'Ctrl-Q' },
+            exec: closePost,
+        });
+        humanizedEditor.commands.addCommand({
+            name: 'previewPost',
+            bindKey: { win: 'Ctrl-P' },
+            exec: previewPost,
         });
         humanizedEditor.on('change', function () {
             // Update original textarea value, which will be posted on post Update.
@@ -129,6 +145,16 @@ var HumanizedEditor = (function () {
         insertImageTrigger.dispatchEvent(mouseDown);
         insertImageTrigger.dispatchEvent(mouseUp);
         insertImageTrigger.dispatchEvent(mouseOut);
+    }
+
+    function closePost() {
+        var closeButton = document.getElementById('closeButton');
+        closeButton.click();
+    }
+
+    function previewPost() {
+        var previewButton = document.getElementById('previewButton');
+        previewButton.click();
     }
 
     function switchToLabels() {
