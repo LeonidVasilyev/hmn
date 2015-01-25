@@ -33,6 +33,7 @@ var HumanizedEditor = (function () {
 
         // Inject humanized editor.
         var humanizedEditor = ace.edit('humanizedEditorWrapper');
+        humanizedEditor.focus();
         return humanizedEditor;
     }
 
@@ -147,6 +148,7 @@ var HumanizedEditor = (function () {
         insertImageTrigger.dispatchEvent(mouseOut);
     }
 
+    // TODO: Change to .topHolder:nth-child()
     function closePost() {
         var closeButton = document.getElementById('closeButton');
         closeButton.click();
