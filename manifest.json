@@ -1,6 +1,7 @@
+
 {
 
-    "name": "humanize-blogger-editor",
+    "name": "Humanize Blogger Editor",
     "version": "0.0.1",
     "manifest_version": 2,
     "content_scripts": [
@@ -10,5 +11,10 @@
             "css": [ "css/humanize.css" ],
             "js": [ "js/libs/jquery-1.11.2.min.js","js/libs/js-beautify/beautify-html.js", "js/libs/ace/ace.js", "js/libs/ace/mode-html.js", "js/libs/ace/theme-monokai.js", "js/humanize.js" ]
         }
-    ]
+    ],
+    "icons": 
+    	{ 
+		"48": "img/icon48.png",
+    		"128": "img/icon128.png"
+	}
 }
