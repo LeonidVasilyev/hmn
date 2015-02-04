@@ -19,7 +19,7 @@ var HumanizedEditor = (function () {
         // It shrinks editor, which is not rerender text wrap after container div is resized.
         // So I add stretched to whole editors wrapper iframe and observe it's windows resize event to rerender editors text wrap. 
         var originalEditorHolder = $('.editorHolder');
-        originalEditorHolder.append('<iframe id="holderResizeSignalFrame" width=100% height=100% style="position:absolute;z-index:-1"></iframe>');
+        originalEditorHolder.append('<iframe id="holderResizeSignalFrame"></iframe>');
         // Turn off mode switching.
         var modeToggle = $('span.tabs');
         modeToggle.hide();
