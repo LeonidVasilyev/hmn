@@ -26,10 +26,14 @@ var HumanizedEditor = (function () {
 
         // Add identifiers to important interface elements using jQuery :contains() selector, so I can easily identify and call native events
         // on this elements later.
-        var closeButton = $('button.blogg-button:contains(Close)');
-        closeButton.attr('id', 'closeButton');
-        var previewButton = $('button.blogg-button:contains(Preview)');
-        previewButton.attr('id', 'previewButton');
+        var firstTopHolderButton = $('button.blogg-button:contains(Publish), button.blogg-button:contains(Update)');
+        firstTopHolderButton.attr('id', 'firstTopHolderButton');
+        var secondTopHolderButton = $('button.blogg-button:contains(Save), button.blogg-button:contains(Revert to draft)');
+        secondTopHolderButton.attr('id', 'secondTopHolderButton');
+        var thirdTopHolderButton = $('button.blogg-button:contains(Preview)');
+        thirdTopHolderButton.attr('id', 'thirdTopHolderButton');
+        var fourthTopHolderButton = $('button.blogg-button:contains(Close)');
+        fourthTopHolderButton.attr('id', 'fourthTopHolderButton');
 
         // Inject humanized editor.
         var humanizedEditor = ace.edit('humanizedEditorWrapper');
@@ -59,15 +63,26 @@ var HumanizedEditor = (function () {
             },
         });
         humanizedEditor.commands.addCommand({
-            name: 'closePost',
-            bindKey: { win: 'Ctrl-Q' },
-            exec: closePost,
+            name: 'publishOrUpdate',
+            bindKey: { win: 'Ctrl-J' },
+            exec: function () { toggleButton('firstTopHolderButton') },
+        });
+        humanizedEditor.commands.addCommand({
+            name: 'saveOrRevertToDraft',
+            bindKey: { win: 'Ctrl-K' },
+            exec: function() { toggleButton('secondTopHolderButton')},
         });
         humanizedEditor.commands.addCommand({
             name: 'previewPost',
-            bindKey: { win: 'Ctrl-P' },
-            exec: previewPost,
+            bindKey: { win: 'Ctrl-L' },
+            exec: function () { toggleButton('thirdTopHolderButton') },
         });
+        humanizedEditor.commands.addCommand({
+            name: 'closePost',
+            bindKey: { win: 'Ctrl-Q' },
+            exec: function () { toggleButton('fourthTopHolderButton') },
+        });
+
         humanizedEditor.on('change', function () {
             // Update original textarea value, which will be posted on post Update.
             var humanizedEditorValue = humanizedEditor.getValue();
@@ -148,15 +163,9 @@ var HumanizedEditor = (function () {
         insertImageTrigger.dispatchEvent(mouseOut);
     }
 
-    // TODO: Change to .topHolder:nth-child()
-    function closePost() {
-        var closeButton = document.getElementById('closeButton');
+    function toggleButton(id) {
+        var closeButton = document.getElementById(id);
         closeButton.click();
-    }
-
-    function previewPost() {
-        var previewButton = document.getElementById('previewButton');
-        previewButton.click();
     }
 
     function switchToLabels() {
